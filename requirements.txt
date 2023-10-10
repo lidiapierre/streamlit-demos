@@ -1,0 +1,11 @@
+langchain
+openai
+wikipedia
+streamlit
+PyPDF2
+faiss-cpu
+tiktoken
+python-dotenv
+streamlit-extras
+youtube-transcript-api
+pytube

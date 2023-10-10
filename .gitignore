@@ -1,0 +1,6 @@
+.env
+*.pkl
+.DS_Store
+.idea
+Lib
+__pycache__/
