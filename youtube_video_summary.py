@@ -15,7 +15,7 @@ chain = load_summarize_chain(llm=llm, chain_type='map_reduce', verbose=False)
 
 
 def main():
-    add_bg_from_local("images/abstract_3.jpg")
+    add_bg_from_local("images/abstract_5.jpg")
     st.header("Youtube video summarizer")
     url = st.text_input("Youtube video URL", placeholder="https://www.youtube.com/watch?xxxxxx")
 
