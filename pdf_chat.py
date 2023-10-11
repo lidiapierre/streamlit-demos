@@ -23,12 +23,6 @@ textsplitter = CharacterTextSplitter(
     length_function=len
 )
 
-# resumes_dir = "path to dir"
-# for file in os.listdir(resumes_dir):
-#     reader = PdfReader(os.path.join(resumes_dir,file))
-#     page_texts = [page.extract_text() for page in self.reader.pages]
-#     text = " ".join(self.page_texts)
-
 advanced_prompt = """
 You are a Bot assistant answering any questions about documents.
 You are given a question and a set of documents.

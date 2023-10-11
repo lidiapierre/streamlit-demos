@@ -9,3 +9,5 @@ python-dotenv
 streamlit-extras
 youtube-transcript-api
 pytube
+huggingface-hub
+sentence-transformers
