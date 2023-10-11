@@ -1,6 +1,8 @@
 import streamlit as st
 import base64
 
+import tiktoken
+
 
 def add_bg_from_local(image_file):
     with open(image_file, "rb") as image_file:
@@ -16,3 +18,9 @@ def add_bg_from_local(image_file):
     """,
     unsafe_allow_html=True
     )
+
+
+def num_tokens_from_string(string: str, encoding_name: str) -> int:
+    encoding = tiktoken.get_encoding(encoding_name)
+    num_tokens = len(encoding.encode(string))
+    return num_tokens
