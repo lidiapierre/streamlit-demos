@@ -84,10 +84,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-# resumes_dir = "path to dir"
-# for file in os.listdir(resumes_dir):
-#     reader = PdfReader(os.path.join(resumes_dir,file))
-#     page_texts = [page.extract_text() for page in self.reader.pages]
-#     text = " ".join(self.page_texts)
