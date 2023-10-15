@@ -1,27 +1,35 @@
-import streamlit as st
 import base64
 import json
-import traceback
-from langchain.llms import OpenAI
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.vectorstores import FAISS
 import os
 import pickle
-from PyPDF2 import PdfReader
+import traceback
 
+import streamlit as st
+from PyPDF2 import PdfReader
 from dotenv import load_dotenv
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.llms import HuggingFaceHub
+from langchain.llms import OpenAI
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import FAISS
+
 load_dotenv()
 
 
 def get_llm():
     if os.getenv("LLM") == "openai":
         return OpenAI()
+    else:
+        return HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature": 0.5, "max_length": 512})
 
 
 def get_embeddings():
     if os.getenv("EMBEDDINGS") == "openai":
         return OpenAIEmbeddings()
+    else:
+        embedding_model_name = os.environ.get('HF_EMBEDDING_MODEL_NAME')
+        return HuggingFaceEmbeddings(model_name=embedding_model_name)
 
 
 def get_text_splitter():
@@ -39,27 +47,26 @@ def get_text_splitter():
     )
 
 
-def get_pdf_text(file):
-    reader = PdfReader(file)
-    raw_text = ''
-    for page in reader.pages:
-        text = page.extract_text()
-        if text:
-            raw_text += text
-
-    return " ".join(raw_text.split())
+def get_pdf_text(files):
+    text = ""
+    for pdf in files:
+        pdf_reader = PdfReader(pdf)
+        for page in pdf_reader.pages:
+            text += page.extract_text()
+    return text
 
 
-def get_vector_store_from_text(store_name, text):
-    if os.path.exists(f"{store_name}.pkl"):
-        with open(f"{store_name}.pkl", "rb") as f:
+def get_vector_store_from_text(text, store_name=None):
+    if store_name and os.path.exists(f"persist/{store_name}.pkl"):
+        with open(f"persist/{store_name}.pkl", "rb") as f:
             vector_store = pickle.load(f)
     else:
         text_splitter = get_text_splitter()
         texts = text_splitter.split_text(text)
         vector_store = FAISS.from_texts(texts, get_embeddings())
-        with open(f"{store_name}.pkl", "wb") as f:
-            pickle.dump(vector_store, f)
+        if store_name:
+            with open(f"persist/{store_name}.pkl", "wb") as f:
+                pickle.dump(vector_store, f)
     return vector_store
 
 
@@ -67,7 +74,7 @@ def add_bg_from_local(image_file):
     with open(image_file, "rb") as image_file:
         encoded_string = base64.b64encode(image_file.read())
     st.markdown(
-    f"""
+        f"""
     <style>
     .stApp {{
         background-image: url(data:image/{"png"};base64,{encoded_string.decode()});
@@ -75,9 +82,8 @@ def add_bg_from_local(image_file):
     }}
     </style>
     """,
-    unsafe_allow_html=True
+        unsafe_allow_html=True
     )
-
 
 
 RESPONSE_JSON = {
@@ -92,6 +98,7 @@ RESPONSE_JSON = {
         "correct": "correct answer",
     },
 }
+
 
 def get_table_data(quiz_str):
     try:
