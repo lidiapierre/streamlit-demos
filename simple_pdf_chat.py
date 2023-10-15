@@ -1,12 +1,9 @@
 import streamlit as st
 from langchain.chains.question_answering import load_qa_chain
 
-
 from utils import add_bg_from_local, get_llm, get_pdf_text, get_vector_store_from_text
 
-
 llm = get_llm()
-
 
 advanced_prompt = """
 You are a Bot assistant answering any questions about documents.
