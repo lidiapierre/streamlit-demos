@@ -2,8 +2,8 @@
 
 This repository contains a set of small Streamlit applications that leverage LangChain and OpenAI Large Language Models.
 
-- **pdf_chat.py**: Interact with your PDF documents.
-- **quizz_generator.py**: Generate multiple choice quizz leveraging Wikipedia content.
+- **chat_with_own_data.py**: Chatbot agent to interact with your PDFs files and web contents.
+- **quizz_generator.py**: Generate multiple choice quizz leveraging a Wikipedia search and online resources.
 - **youtube_video_summary.py**: Summarize YouTube videos transcripts.
 
 ## How to Use
@@ -11,7 +11,7 @@ This repository contains a set of small Streamlit applications that leverage Lan
 1. Clone this repository:
 
    ```bash
-   git clone https://github.com/yourusername/streamlit-demo.git
+   git clone https://github.com/lidiapierre/streamlit-demo.git
    ```
 
 2. Install dependencies:
@@ -20,10 +20,17 @@ This repository contains a set of small Streamlit applications that leverage Lan
    pip install -r requirements.txt
    ```
 
-3. Run each app using Streamlit:
+3. Create a `.env` file and add your personal keys
 
    ```bash
-   streamlit run pdf_chat.py
+   # You can copy the example .env file
+   cp example.env .env
+   ```
+
+4. Run each app using Streamlit:
+
+   ```bash
+   streamlit run chat_with_own_data.py
    streamlit run quizz_generator.py
    streamlit run youtube_video_summary.py
    ```
