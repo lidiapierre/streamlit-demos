@@ -1,46 +1,62 @@
+import json
+import sys
+
 import streamlit as st
-from langchain.llms import OpenAI
-from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
+from langchain.chains.summarize import load_summarize_chain
+from langchain.document_loaders import UnstructuredURLLoader
+from langchain.prompts import PromptTemplate
 from langchain.utilities import WikipediaAPIWrapper
 
-from utils import add_bg_from_local
-
-from dotenv import load_dotenv
-load_dotenv()
+from utils import add_bg_from_local, get_llm, RESPONSE_JSON
 
 quizz_template = PromptTemplate(
-    input_variables=['topic', 'wiki_search'],
+    input_variables=['text', 'response_json'],
     template="""
-    Create a multiple choice quiz with 5 questions on the topic of {topic}. Leverage this wikipedia search: 
-    {wiki_search} to create the questions. Each question should have 3 possible answers. Do not include the correct 
-    answers in the quiz.
-    Use the following format:
-    1. <question>
-      a. <option 1>
-      b. <option 2>
-      c. <option 3>
-    """
+Text:{text}
+Given the above text, create a quiz of 5 multiple choice questions. 
+Make sure the questions are not repeated and check all the questions to be conforming the text as well.
+Make sure to format your response like  RESPONSE_JSON below  and use it as a guide. \
+### RESPONSE_JSON
+{response_json}
+"""
 )
 
-llm = OpenAI(temperature=0.7, max_tokens=500)
+llm = get_llm()
 wiki = WikipediaAPIWrapper()
-script_chain = LLMChain(llm=llm, prompt=quizz_template, output_key="script", verbose=True)
+summarize_chain = load_summarize_chain(llm=llm, chain_type="stuff")
+
+quiz_chain = LLMChain(llm=llm, prompt=quizz_template, output_key="quizz", verbose=True)
 
 
 def main():
-    st.title("Quizz Generator")
+    st.title("Quizz Generator 📚")
     add_bg_from_local("images/abstract_1.jpg")
-    prompt = st.text_input("Enter the topic you want to be tested on")
-    if prompt:
-        wiki_research = wiki.run(prompt)
-        if wiki_research:
-            quizz = script_chain.run(topic=prompt, wiki_search=wiki_research)
-            st.markdown(quizz)
-            with st.expander('Based on the Wikipedia Research:', expanded=False):
-                st.info(wiki_research)
-        else:
-            st.write("This topic wasn't found on Wikipedia, please try another topic")
+
+    with st.form("user_inputs"):
+        topic = st.text_input("Enter the topic you want to be tested on")
+        url = st.text_input("Optional: enter a link to the course content")
+        button = st.form_submit_button("Create Quizz")
+
+        if button:
+            docs = []
+            if not topic:
+                sys.exit("Missing topic")
+            wiki_search = wiki.load(topic)
+            docs.extend(wiki_search)
+            if url:
+                url_data = UnstructuredURLLoader([url], mode="single").load()[0]
+                st.write(url_data.page_content)
+                docs.append(url_data)
+
+            summary = summarize_chain.run(docs)
+            response = quiz_chain(
+                {
+                    "text": summary,
+                    "response_json": json.dumps(RESPONSE_JSON)
+                }
+            )
+            print(response)
 
 
 if __name__ == '__main__':
