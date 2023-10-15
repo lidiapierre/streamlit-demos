@@ -1,27 +1,12 @@
 import streamlit as st
-from langchain.llms import OpenAI
 from langchain.chains.question_answering import load_qa_chain
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.text_splitter import CharacterTextSplitter
-from langchain.vectorstores import FAISS
 
-import pickle
 
-from utils import add_bg_from_local
-from PyPDF2 import PdfReader
-import os
+from utils import add_bg_from_local, get_llm, get_pdf_text, get_vector_store_from_text
 
-from dotenv import load_dotenv
-load_dotenv()
 
-embeddings = OpenAIEmbeddings()
+llm = get_llm()
 
-textsplitter = CharacterTextSplitter(
-    separator=" ",
-    chunk_size=1000,
-    chunk_overlap=200,
-    length_function=len
-)
 
 advanced_prompt = """
 You are a Bot assistant answering any questions about documents.
@@ -54,34 +39,15 @@ def main():
     pdf = st.file_uploader("Upload your PDF file", type="pdf")
 
     if pdf is not None:
-        reader = PdfReader(pdf)
-        raw_text = ''
-        for page in reader.pages:
-            text = page.extract_text()
-            if text:
-                raw_text += text
-
-        raw_text = " ".join(raw_text.split())
-
-        texts = textsplitter.split_text(raw_text)
-
+        raw_text = get_pdf_text(pdf)
         store_name = pdf.name[:-4]
-        if os.path.exists(f"{store_name}.pkl"):
-            with open(f"{store_name}.pkl", "rb") as f:
-                vector_store = pickle.load(f)
-        else:
-            vector_store = FAISS.from_texts(texts, embeddings)
-            with open(f"{store_name}.pkl", "wb") as f:
-                pickle.dump(vector_store, f)
-
+        vector_store = get_vector_store_from_text(store_name, raw_text)
         query = st.text_input("What is your question ?")
 
         if query:
             docs = vector_store.similarity_search(query)
-            chain = load_qa_chain(OpenAI(), chain_type='stuff', verbose=True)
-            response = chain.run(input_documents=docs, question=query)
-
-            st.write(response)
+            chain = load_qa_chain(llm, chain_type='stuff', verbose=True)
+            st.write(chain.run(input_documents=docs, question=query))
 
 
 if __name__ == '__main__':
