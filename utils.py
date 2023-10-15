@@ -38,7 +38,7 @@ def get_text_splitter():
     else:
         chunk_size = 1000
     if os.getenv("CHUNK_OVERLAP"):
-        chunk_overlap = os.getenv("CHUNKCHUNK_OVERLAP_SIZE")
+        chunk_overlap = os.getenv("CHUNK_OVERLAP")
     else:
         chunk_overlap = 1000
     return RecursiveCharacterTextSplitter(
@@ -56,14 +56,14 @@ def get_pdf_text(files):
     return text
 
 
-def get_vector_store_from_text(text, store_name=None):
+def get_vector_store_from_docs(docs, store_name=None):
     if store_name and os.path.exists(f"persist/{store_name}.pkl"):
         with open(f"persist/{store_name}.pkl", "rb") as f:
             vector_store = pickle.load(f)
     else:
         text_splitter = get_text_splitter()
-        texts = text_splitter.split_text(text)
-        vector_store = FAISS.from_texts(texts, get_embeddings())
+        chunks = text_splitter.split_documents(docs)
+        vector_store = FAISS.from_documents(chunks, get_embeddings())
         if store_name:
             with open(f"persist/{store_name}.pkl", "wb") as f:
                 pickle.dump(vector_store, f)

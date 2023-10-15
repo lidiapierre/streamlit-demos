@@ -12,6 +12,3 @@ pytube
 huggingface-hub
 sentence-transformers
 unstructured
-pdf2image
-libmagic
-python-magic-bin==0.4.14

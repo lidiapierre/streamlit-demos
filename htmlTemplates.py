@@ -14,6 +14,7 @@ css = '''
   color: #fff;
 }
 '''
+# TODO is there better streamlit feature ???
 
 bot_template = '''
 <div class="chat-message bot">
