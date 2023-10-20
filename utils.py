@@ -1,11 +1,10 @@
 import base64
 import json
 import os
+import openai
 import pickle
-import traceback
 
 import streamlit as st
-from PyPDF2 import PdfReader
 from dotenv import load_dotenv
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.embeddings.openai import OpenAIEmbeddings
@@ -19,6 +18,7 @@ load_dotenv()
 
 def get_llm():
     if os.getenv("LLM") == "openai":
+        openai.api_key = os.getenv("OPENAI_API_KEY")
         return OpenAI()
     else:
         return HuggingFaceHub(repo_id="google/flan-t5-xxl", model_kwargs={"temperature": 0.5, "max_length": 512})
@@ -26,6 +26,7 @@ def get_llm():
 
 def get_embeddings():
     if os.getenv("EMBEDDINGS") == "openai":
+        openai.api_key = os.getenv("OPENAI_API_KEY")
         return OpenAIEmbeddings()
     else:
         embedding_model_name = os.environ.get('HF_EMBEDDING_MODEL_NAME')
@@ -40,20 +41,11 @@ def get_text_splitter():
     if os.getenv("CHUNK_OVERLAP"):
         chunk_overlap = os.getenv("CHUNK_OVERLAP")
     else:
-        chunk_overlap = 1000
+        chunk_overlap = 200
     return RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
     )
-
-
-def get_pdf_text(files):
-    text = ""
-    for pdf in files:
-        pdf_reader = PdfReader(pdf)
-        for page in pdf_reader.pages:
-            text += page.extract_text()
-    return text
 
 
 def get_vector_store_from_docs(docs, store_name=None):
@@ -86,6 +78,18 @@ def add_bg_from_local(image_file):
     )
 
 
+def hide_streamlit_header_footer():
+    hide_st_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            #root > div:nth-child(1) > div > div > div > div > section > div {padding-top: 0rem;}
+            </style>
+            """
+    st.markdown(hide_st_style, unsafe_allow_html=True)
+
+
 RESPONSE_JSON = {
     "1": {
         "no": "1",
@@ -94,6 +98,29 @@ RESPONSE_JSON = {
             "a": "choice here",
             "b": "choice here",
             "c": "choice here",
+            "d": "choice here",
+        },
+        "correct": "correct answer",
+    },
+    "2": {
+        "no": "2",
+        "mcq": "multiple choice question",
+        "options": {
+            "a": "choice here",
+            "b": "choice here",
+            "c": "choice here",
+            "d": "choice here",
+        },
+        "correct": "correct answer",
+    },
+    "3": {
+        "no": "3",
+        "mcq": "multiple choice question",
+        "options": {
+            "a": "choice here",
+            "b": "choice here",
+            "c": "choice here",
+            "d": "choice here",
         },
         "correct": "correct answer",
     },
@@ -101,22 +128,17 @@ RESPONSE_JSON = {
 
 
 def get_table_data(quiz_str):
-    try:
-        # convert the quiz from a str to dict
-        quiz_dict = json.loads(quiz_str)
-        quiz_table_data = []
-        # Iterate over the quiz dictionary and extract the required information
-        for key, value in quiz_dict.items():
-            mcq = value["mcq"]
-            options = " | ".join(
-                [
-                    f"{option}: {option_value}"
-                    for option, option_value in value["options"].items()
-                ]
-            )
-            correct = value["correct"]
-            quiz_table_data.append({"MCQ": mcq, "Choices": options, "Correct": correct})
-        return quiz_table_data
-    except Exception as e:
-        traceback.print_exception(type(e), e, e.__traceback__)
-        return False
+    quiz_dict = json.loads(quiz_str)
+    quiz_table_data = []
+    # Iterate over the quiz dictionary and extract the required information
+    for key, value in quiz_dict.items():
+        mcq = value["mcq"]
+        options = " | ".join(
+            [
+                f"{option}: {option_value}"
+                for option, option_value in value["options"].items()
+            ]
+        )
+        correct = value["correct"]
+        quiz_table_data.append({"MCQ": mcq, "Choices": options, "Correct": correct})
+    return quiz_table_data

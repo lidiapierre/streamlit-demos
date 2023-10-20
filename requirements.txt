@@ -12,3 +12,4 @@ pytube
 huggingface-hub
 sentence-transformers
 unstructured
+pandas
